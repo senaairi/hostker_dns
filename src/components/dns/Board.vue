@@ -2,6 +2,7 @@
     <div>
         <p>
             <el-button size="mini" @click="AddDrawerOpen=true" type="primary">新增解析</el-button>
+            <span> 筛选状态下，删除记录没办法删除页面内容，重置筛选就正常了</span>
         </p>
         <el-table :data="RecordList" style="width: 100%" border>
             <el-table-column prop="id" label="ID" width="100" :sortable="true"></el-table-column>
@@ -25,8 +26,8 @@
             <el-table-column prop="data" label="解析内容"></el-table-column>
             <el-table-column label="操作" width="150">
                 <template #default="scope">
-                    <el-button size="mini" @click="Edit(scope.$index)" type="primary">编辑</el-button>
-                    <el-popconfirm confirmButtonText='好的' cancelButtonText='不用了' icon="el-icon-info" @confirm="Delete(scope.$index)" iconColor="red" title="确定删除吗？">
+                    <el-button size="mini" @click="Edit(scope.row)" type="primary">编辑</el-button>
+                    <el-popconfirm confirmButtonText='好的' cancelButtonText='不用了' icon="el-icon-info" @confirm="Delete(scope.row.id)" iconColor="red" title="确定删除吗？">
                         <template #reference>
                             <el-button size="mini" type="danger">删除</el-button>
                         </template>
@@ -117,6 +118,7 @@
             GetData('dnsGetRecords', f, (data: any) => {
                 if (data.success) {
                     this.RecordList = data.records;
+                    this.ReloadRowIndex();
                 } else {
                     this.$alert('加载解析列表失败' + data.errorMessage);
                 }
@@ -193,15 +195,14 @@
         EditDrawerData = {
             id: '',
             header: '',
-            index: 0,
+            row: {},
             data: '',
             ttl: 0,
             priority: 0
         };
 
         EditDrawerOpen = false;
-        Edit (index: number) {
-            const row = this.RecordList[index];
+        Edit (row: any) {
             if (row.type === 'CDN') {
                 this.$message.error('CDN解析没啥好编辑的');
                 return;
@@ -211,12 +212,12 @@
             this.EditDrawerData.data = row.data;
             this.EditDrawerData.ttl = row.ttl;
             this.EditDrawerData.priority = row.priority;
-            this.EditDrawerData.index = index;
+            this.EditDrawerData.row = row;
             this.EditDrawerOpen = true;
         }
 
         EditDrawerSave () {
-            const row = this.RecordList[this.EditDrawerData.index];
+            const row = this.EditDrawerData.row as any;
             if (!this.EditDrawerData.data) {
                 this.$message.error('请填写解析值');
                 return false;
@@ -226,9 +227,6 @@
                 return false;
             }
             const f = new FormData();
-            f.append('id', this.EditDrawerData.id);
-            f.append('data', this.EditDrawerData.data);
-            f.append('ttl', String(this.EditDrawerData.ttl));
             if (row.type === 'MX') {
                 if (this.EditDrawerData.priority < 1 || this.EditDrawerData.priority > 50000) {
                     this.$message.error('请填写优先级');
@@ -236,6 +234,9 @@
                 }
                 f.append('priority', String(this.EditDrawerData.priority));
             }
+            f.append('id', this.EditDrawerData.id);
+            f.append('data', this.EditDrawerData.data);
+            f.append('ttl', String(this.EditDrawerData.ttl));
             GetData('dnsEditRecord', f, (data: any) => {
                 if (data.success) {
                     this.$message.success('修改解析成功');
@@ -254,17 +255,29 @@
         }
         // ------------------------------------------------------------------------------------------------------------------ 编辑 end
 
-        Delete (index: number) {
-            const row = this.RecordList[index];
+        Delete (id: number) {
             const f = new FormData();
-            f.append('id', String(row.id));
+            f.append('id', String(id));
             GetData('dnsDeleteRecord', f, (data: any) => {
                 if (data.success) {
                     this.$message.success('删除解析成功');
-                    delete this.RecordList[index];
+                    delete this.RecordList[this.RowIndex[id]];
+                    this.ReloadRowIndex();
                 } else {
                     this.$message.error(data.errorMessage);
                 }
+            });
+        }
+
+        /**
+         * 存放解析id与数组index的关系，给删除功能用的<br>
+         * 别问我为啥写这东西
+         */
+        RowIndex: Record<any, any> = {};
+        ReloadRowIndex () {
+            this.RowIndex = {};
+            this.RecordList.forEach((item: any, index: any) => {
+                this.RowIndex[item.id] = index;
             });
         }
 

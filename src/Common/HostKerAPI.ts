@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const APIURL = 'https://lihz.org/hostkerapi/';
+const APIURL = 'https://lihz.org/api/';
 const Account: Record<string, any> = {
     login: false,
     level: 0,

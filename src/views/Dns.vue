@@ -38,11 +38,9 @@
                 this.DomainNameList.push(value.value);
                 this.SelectTabs = value.value;
                 // 将域名列表记录到缓存，下次就不用再输入了
-                let dll: string[] = [];
-                const dl = this.$cookie.getCookie('domainlist');
-                if (dl) dll = dl.split(',');
-                dll.push(value.value);
-                this.$cookie.setCookie('domainlist', dll.join(','), { expire: 60 * 60 * 24 * 7 });
+                const arrl = this.CookieDomainListGet();
+                arrl.push(value.value);
+                this.CookieDomainListSave(arrl);
             });
         }
 
@@ -50,10 +48,27 @@
             if (action === 'add') {
                 this.Add();
             } else if (action === 'remove') {
-                console.debug(targetName);
-                console.debug(action);
-                console.debug(c);
+                this.DomainNameList.splice(this.DomainNameList.indexOf(targetName), 1);
+                // 更新cookie
+                const arrl = this.CookieDomainListGet();
+                if (arrl.indexOf(targetName) !== -1) arrl.splice(arrl.indexOf(targetName), 1);
+                this.CookieDomainListSave(arrl);
+                // 如果是关闭当前页，需要重写选中第一页
+                if (targetName === this.SelectTabs) this.SelectTabs = arrl[0];
             }
+        }
+
+        CookieDomainListGet (): string[] {
+            const dl = this.$cookie.getCookie('domainlist');
+            if (dl) {
+                return dl.split(',');
+            } else {
+                return [];
+            }
+        }
+
+        CookieDomainListSave (arr: string[]) {
+            this.$cookie.setCookie('domainlist', arr.join(','), { expire: 60 * 60 * 24 * 7 });
         }
 
         mounted () {
@@ -61,13 +76,13 @@
                 LoginPage();
             } else {
                 this.HeaderInfo.email = Seesion.email;
-                const dl = this.$cookie.getCookie('domainlist');
-                if (dl) {
-                    const arr = dl.split(',');
-                    arr.forEach((n: string) => {
+                // 读取cookie内记录的域名列表
+                const arrl = this.CookieDomainListGet();
+                if (arrl.length > 0) {
+                    arrl.forEach((n: string) => {
                         this.DomainNameList.push(n);
                     });
-                    this.SelectTabs = arr[0];
+                    this.SelectTabs = arrl[0];
                 }
             }
         }
