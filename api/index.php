@@ -8,7 +8,7 @@ $curl = curl_init();
 
 // 后端请求地址
 $request_url = $source_https ? 'https://' : 'http://';
-$request_url .= $source_host.$_SERVER['REQUEST_URI'];
+$request_url .= $source_host.$_GET['path'];
 
 curl_setopt($curl, CURLOPT_URL, $request_url);
 // 启用时会将头文件的信息作为数据流输出。
