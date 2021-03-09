@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 
 const routes: Array<RouteRecordRaw> = [
+    { path: '/', component: import('@/views/Index.vue'), meta: { title: '首页' } },
     {
         path: '/login',
         name: 'Login',
@@ -13,14 +14,6 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: 'DNS解析管理' },
         component: () => import('@/views/Dns.vue')
     }
-    // {
-    //     path: '/about',
-    //     name: 'About',
-    //     // route level code-splitting
-    //     // this generates a separate chunk (about.[hash].js) for this route
-    //     // which is lazy-loaded when the route is visited.
-    //     component: () => import(/* webpackChunkName: "about" */ '')
-    // }
 ];
 
 const router = createRouter({
